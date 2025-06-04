@@ -1,0 +1,195 @@
+package com.tripplanner.database;
+
+import com.tripplanner.config.ConfigManager;
+import com.tripplanner.model.Place;
+import com.tripplanner.model.Weather;
+import javax.persistence.*;
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class DatabaseManager {
+    private static DatabaseManager instance;
+    private EntityManagerFactory emf;
+
+    private DatabaseManager() {}
+
+    public static synchronized DatabaseManager getInstance() {
+        if (instance == null) {
+            instance = new DatabaseManager();
+        }
+        return instance;
+    }
+
+    public void initializeDatabase() {
+        try {
+            // Create data directory if it doesn't exist
+            File dataDir = new File("data");
+            if (!dataDir.exists()) {
+                dataDir.mkdirs();
+                System.out.println("Created data directory: " + dataDir.getAbsolutePath());
+            }
+
+            // Create EntityManagerFactory with programmatic configuration
+            Map<String, Object> configOverrides = new HashMap<>();
+            configOverrides.put("javax.persistence.jdbc.url", ConfigManager.getInstance().getDatabaseUrl());
+            configOverrides.put("javax.persistence.jdbc.user", ConfigManager.getInstance().getDatabaseUser());
+            configOverrides.put("javax.persistence.jdbc.password", ConfigManager.getInstance().getDatabasePassword());
+            configOverrides.put("javax.persistence.jdbc.driver", "org.h2.Driver");
+            configOverrides.put("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
+            configOverrides.put("hibernate.hbm2ddl.auto", "update");
+            configOverrides.put("hibernate.show_sql", "false");
+            configOverrides.put("hibernate.format_sql", "true");
+
+            emf = Persistence.createEntityManagerFactory("tripplanner", configOverrides);
+
+            // Test the connection
+            testConnection();
+            System.out.println("Database initialized successfully!");
+
+        } catch (Exception e) {
+            System.err.println("Failed to initialize database: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Database initialization failed", e);
+        }
+    }
+
+    private void testConnection() {
+        EntityManager em = emf.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            // Simple test query
+            em.createQuery("SELECT COUNT(p) FROM Place p").getSingleResult();
+            em.getTransaction().commit();
+            System.out.println("Database connection test successful!");
+        } catch (Exception e) {
+            em.getTransaction().rollback();
+            System.out.println("Database connection test failed, but tables may be created now: " + e.getMessage());
+        } finally {
+            em.close();
+        }
+    }
+
+    public void savePlace(Place place) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            em.getTransaction().begin();
+
+            // Sprawdź czy miejsce już istnieje (unikaj duplikatów)
+            List<Place> existingPlaces = em.createQuery(
+                            "SELECT p FROM Place p WHERE p.name = :name AND p.address = :address", Place.class)
+                    .setParameter("name", place.getName())
+                    .setParameter("address", place.getAddress())
+                    .getResultList();
+
+            if (existingPlaces.isEmpty()) {
+                em.persist(place);
+                em.getTransaction().commit();
+                System.out.println("Saved new place: " + place.getName());
+            } else {
+                em.getTransaction().rollback();
+                System.out.println("Place already exists: " + place.getName());
+            }
+        } catch (Exception e) {
+            em.getTransaction().rollback();
+            System.err.println("Failed to save place: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+    }
+
+    public void saveWeather(Weather weather) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            em.persist(weather);
+            em.getTransaction().commit();
+            System.out.println("Saved weather data for: " + weather.getLocation());
+        } catch (Exception e) {
+            em.getTransaction().rollback();
+            System.err.println("Failed to save weather: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+    }
+
+    public List<Place> getAllPlaces() {
+        EntityManager em = emf.createEntityManager();
+        try {
+            List<Place> places = em.createQuery("SELECT p FROM Place p ORDER BY p.name", Place.class).getResultList();
+            System.out.println("Retrieved " + places.size() + " saved places from database");
+            return places;
+        } catch (Exception e) {
+            System.err.println("Failed to get places: " + e.getMessage());
+            return List.of(); // Return empty list instead of null
+        } finally {
+            em.close();
+        }
+    }
+
+    public List<Place> getPlacesByType(String type) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            List<Place> places = em.createQuery("SELECT p FROM Place p WHERE p.type = :type ORDER BY p.name", Place.class)
+                    .setParameter("type", type)
+                    .getResultList();
+            System.out.println("Retrieved " + places.size() + " saved places of type: " + type);
+            return places;
+        } catch (Exception e) {
+            System.err.println("Failed to get places by type: " + e.getMessage());
+            return List.of();
+        } finally {
+            em.close();
+        }
+    }
+
+    public boolean deletePlace(Long placeId) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            Place place = em.find(Place.class, placeId);
+            if (place != null) {
+                em.remove(place);
+                em.getTransaction().commit();
+                System.out.println("Deleted place: " + place.getName());
+                return true;
+            } else {
+                em.getTransaction().rollback();
+                System.out.println("Place not found for deletion");
+                return false;
+            }
+        } catch (Exception e) {
+            em.getTransaction().rollback();
+            System.err.println("Failed to delete place: " + e.getMessage());
+            return false;
+        } finally {
+            em.close();
+        }
+    }
+
+    public Weather getLatestWeather(String location) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            List<Weather> results = em.createQuery("SELECT w FROM Weather w WHERE w.location = :location ORDER BY w.timestamp DESC", Weather.class)
+                    .setParameter("location", location)
+                    .setMaxResults(1)
+                    .getResultList();
+            return results.isEmpty() ? null : results.get(0);
+        } catch (Exception e) {
+            System.err.println("Failed to get weather for " + location + ": " + e.getMessage());
+            return null;
+        } finally {
+            em.close();
+        }
+    }
+
+    public void shutdown() {
+        if (emf != null && emf.isOpen()) {
+            emf.close();
+            System.out.println("Database connection closed.");
+        }
+    }
+}
