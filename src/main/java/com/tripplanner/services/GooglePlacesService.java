@@ -91,6 +91,11 @@ public class GooglePlacesService {
 
                     String name = placeJson.optString("name", "Unknown Place");
                     String address = placeJson.optString("formatted_address", "");
+                    String cleanedAddress = removePostalCodeFromAddress(address);
+                    String city = extractCityFromAddress(address);
+
+                    System.out.println("Miasto: " + city);
+
                     double rating = placeJson.optDouble("rating", 0.0);
 
                     // Pobierz współrzędne
@@ -110,7 +115,7 @@ public class GooglePlacesService {
                         }
                     }
 
-                    Place place = new Place(name, address, rating, lat, lng, placeType);
+                    Place place = new Place(name, city, cleanedAddress, rating, lat, lng, placeType);
                     places.add(place);
 
                     System.out.println("Added place: " + name + " (" + rating + "★)");
@@ -126,5 +131,21 @@ public class GooglePlacesService {
         }
         return places;
     }
+
+    private String extractCityFromAddress(String formattedAddress) {
+        String[] parts = formattedAddress.split(",");
+        if (parts.length >= 2) {
+            String cityPart = parts[parts.length - 2].trim(); // np. "00-001 Warszawa"
+            // Usuń kod pocztowy (ciąg 2-3 cyfr + '-' + 3 cyfry)
+            return cityPart.replaceAll("\\b\\d{2,3}-\\d{3}\\s*", "").trim();
+        }
+        return "";
+    }
+
+    private String removePostalCodeFromAddress(String address) {
+        // Usuń kod pocztowy w formacie "00-001" itp.
+        return address.replaceAll("\\b\\d{2,3}-\\d{3}\\b", "").trim().replaceAll(" ,", ",");
+    }
+
 
 }

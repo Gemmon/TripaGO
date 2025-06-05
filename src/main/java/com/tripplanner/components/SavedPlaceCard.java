@@ -5,10 +5,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import com.tripplanner.model.Weather;
+import com.tripplanner.services.WeatherService;
+
 
 public class SavedPlaceCard extends JPanel {
     private Place place;
     private ActionListener deleteListener;
+    private JLabel weatherLabel;
+    private static final WeatherService weatherService = new WeatherService();
+
 
     public SavedPlaceCard(Place place, ActionListener deleteListener) {
         this.place = place;
@@ -27,11 +33,24 @@ public class SavedPlaceCard extends JPanel {
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBackground(Color.WHITE);
 
+        weatherLabel = new JLabel("Pogoda: ładowanie...");
+        weatherLabel.setFont(new Font("Arial", Font.ITALIC, 11));
+        weatherLabel.setForeground(Color.DARK_GRAY);
+        infoPanel.add(weatherLabel);
+
+        loadWeather();
+
+
         // Nazwa miejsca
         JLabel nameLabel = new JLabel(place.getName());
         nameLabel.setFont(new Font("Arial", Font.BOLD, 16));
         nameLabel.setForeground(Color.BLACK);
         infoPanel.add(nameLabel);
+
+        JLabel cityLabel = new JLabel(place.getCity());
+        cityLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        cityLabel.setForeground(Color.BLACK);
+        infoPanel.add(cityLabel);
 
         // Adres
         JLabel addressLabel = new JLabel(place.getAddress());
@@ -93,6 +112,21 @@ public class SavedPlaceCard extends JPanel {
 
         add(buttonPanel, BorderLayout.EAST);
     }
+
+    private void loadWeather() {
+        weatherService.getWeather(place.getCity()).thenAccept(weather -> {
+            if (weather != null) {
+                SwingUtilities.invokeLater(() -> {
+                    weatherLabel.setText(String.format("Pogoda: %.1f°C, %s", weather.getTemperature(), weather.getDescription()));
+                });
+            } else {
+                SwingUtilities.invokeLater(() -> {
+                    weatherLabel.setText("Pogoda: brak danych");
+                });
+            }
+        });
+    }
+
 
     public Place getPlace() {
         return place;

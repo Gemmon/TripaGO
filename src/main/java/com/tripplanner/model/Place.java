@@ -12,6 +12,9 @@ public class Place {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "city")
+    private String city;
+
     @Column(name = "address")
     private String address;
 
@@ -30,8 +33,9 @@ public class Place {
     // Konstruktory
     public Place() {}
 
-    public Place(String name, String address, double rating, double latitude, double longitude, String type) {
+    public Place(String name, String city, String address, double rating, double latitude, double longitude, String type) {
         this.name = name;
+        this.city = city;
         this.address = address;
         this.rating = rating;
         this.latitude = latitude;
@@ -45,6 +49,9 @@ public class Place {
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }

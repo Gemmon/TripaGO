@@ -1,20 +1,17 @@
 package com.tripplanner.components;
 
+import com.tripplanner.model.Place;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class PlaceCard extends JPanel {
-    private String placeName;
-    private String address;
-    private double rating;
+    private Place place; // Store the complete Place object
     private boolean selected = false;
 
-    public PlaceCard(String placeName, String address, double rating) {
-        this.placeName = placeName;
-        this.address = address;
-        this.rating = rating;
+    public PlaceCard(Place place) {
+        this.place = place;
 
         setPreferredSize(new Dimension(300, 80));
         setBorder(BorderFactory.createLineBorder(Color.GRAY));
@@ -41,28 +38,33 @@ public class PlaceCard extends JPanel {
         });
     }
 
+    // Keep the old constructor for backward compatibility
+    public PlaceCard(String placeName, String city, String address, double rating) {
+        this(new Place(placeName, city, address, rating, 0.0, 0.0, "unknown"));
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Rysowanie nazwy miejsca
+        // Draw place name
         g2d.setFont(new Font("Arial", Font.BOLD, 14));
         g2d.setColor(Color.BLACK);
-        g2d.drawString(placeName, 10, 20);
+        g2d.drawString(place.getName(), 10, 20);
 
-        // Rysowanie adresu
+        // Draw address
         g2d.setFont(new Font("Arial", Font.PLAIN, 11));
         g2d.setColor(Color.GRAY);
-        g2d.drawString(address, 10, 40);
+        g2d.drawString(place.getAddress(), 10, 40);
 
-        // Rysowanie oceny
+        // Draw rating
         g2d.setFont(new Font("Arial", Font.BOLD, 12));
         g2d.setColor(Color.ORANGE);
-        g2d.drawString("★ " + String.format("%.1f", rating), 10, 60);
+        g2d.drawString("★ " + String.format("%.1f", place.getRating()), 10, 60);
 
-        // Zaznaczenie
+        // Draw selection indicator
         if (selected) {
             g2d.setColor(Color.BLUE);
             g2d.setStroke(new BasicStroke(3));
@@ -70,6 +72,24 @@ public class PlaceCard extends JPanel {
         }
     }
 
-    public boolean isSelected() { return selected; }
-    public String getPlaceName() { return placeName; }
+    // Getters
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public String getPlaceName() {
+        return place.getName();
+    }
+
+    public String getAddress() {
+        return place.getAddress();
+    }
+
+    public double getRating() {
+        return place.getRating();
+    }
+
+    public Place getPlace() {
+        return place;
+    }
 }

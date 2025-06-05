@@ -12,6 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -91,11 +92,6 @@ public class MainFrame extends JFrame {
         saveButton.addActionListener(this::saveSelectedPlaces);
         searchPanel.add(saveButton);
 
-        // Dodaj przycisk do testowania
-        JButton testButton = new JButton("Test");
-        testButton.addActionListener(e -> testWithMockData());
-        searchPanel.add(testButton);
-
         JButton savedButton = new JButton("Pokaż zapisane");
         savedButton.addActionListener(e -> showSavedPlacesDialog());
         searchPanel.add(savedButton);
@@ -161,24 +157,6 @@ public class MainFrame extends JFrame {
         EventBus.getInstance().register(this);
     }
 
-    private void testWithMockData() {
-        System.out.println("=== ROZPOCZĘCIE TESTU Z PRZYKŁADOWYMI DANYMI ===");
-        statusLabel.setText("Test z przykładowymi danymi...");
-
-        // Utwórz przykładowe dane
-        List<Place> testPlaces = List.of(
-                new Place("Test Restaurant", "ul. Testowa 1, Warszawa", 4.5, 52.2297, 21.0122, "restaurant"),
-                new Place("Test Museum", "ul. Muzealna 2, Warszawa", 4.2, 52.2317, 21.0142, "museum"),
-                new Place("Test Park", "ul. Parkowa 3, Warszawa", 4.8, 52.2287, 21.0102, "park")
-        );
-
-        // Wyślij event z przykładowymi danymi
-        EventBus.getInstance().post(new PlacesFoundEvent(testPlaces));
-
-        System.out.println("Wysłano event z " + testPlaces.size() + " przykładowymi miejscami");
-        statusLabel.setText("Test zakończony - sprawdź czy miejsca się wyświetlają");
-    }
-
     private void performSearch(ActionEvent e) {
         String location = locationField.getText().trim();
         String type = (String) typeComboBox.getSelectedItem();
@@ -231,26 +209,6 @@ public class MainFrame extends JFrame {
             });
         });
     }
-
-    private void saveSelectedPlaces(ActionEvent e) {
-        Component[] components = placesPanel.getComponents();
-        int savedCount = 0;
-
-        for (Component comp : components) {
-            if (comp instanceof PlaceCard && ((PlaceCard) comp).isSelected()) {
-                System.out.println("Zapisywanie: " + ((PlaceCard) comp).getPlaceName());
-                savedCount++;
-            }
-        }
-
-        if (savedCount > 0) {
-            JOptionPane.showMessageDialog(this, "Zapisano " + savedCount + " miejsc");
-            statusLabel.setText("Zapisano " + savedCount + " miejsc");
-        } else {
-            JOptionPane.showMessageDialog(this, "Nie wybrano żadnych miejsc do zapisania");
-        }
-    }
-
     @Subscribe
     public void handlePlacesFound(PlacesFoundEvent event) {
         SwingUtilities.invokeLater(() -> {
@@ -266,7 +224,8 @@ public class MainFrame extends JFrame {
                 System.out.println("Brak miejsc do wyświetlenia");
             } else {
                 for (Place place : event.getPlaces()) {
-                    PlaceCard card = new PlaceCard(place.getName(), place.getAddress(), place.getRating());
+                    // Use the new constructor that takes a Place object
+                    PlaceCard card = new PlaceCard(place);
                     placesPanel.add(card);
                     placesPanel.add(Box.createVerticalStrut(5));
                     System.out.println("Dodano kartę: " + place.getName());
@@ -277,6 +236,61 @@ public class MainFrame extends JFrame {
             placesPanel.repaint();
             System.out.println("Panel miejsc odświeżony");
         });
+    }
+
+    // Updated saveSelectedPlaces method
+    private void saveSelectedPlaces(ActionEvent e) {
+        Component[] components = placesPanel.getComponents();
+        int savedCount = 0;
+        List<String> alreadyExists = new ArrayList<>();
+
+        // Collect and save selected places
+        for (Component comp : components) {
+            if (comp instanceof PlaceCard && ((PlaceCard) comp).isSelected()) {
+                PlaceCard card = (PlaceCard) comp;
+                Place place = card.getPlace();
+
+                try {
+                    // Check if place already exists before saving
+                    List<Place> existingPlaces = DatabaseManager.getInstance().getAllPlaces();
+                    boolean exists = existingPlaces.stream()
+                            .anyMatch(p -> p.getName().equals(place.getName()) &&
+                                    p.getAddress().equals(place.getAddress()));
+
+                    if (!exists) {
+                        DatabaseManager.getInstance().savePlace(place);
+                        savedCount++;
+                        System.out.println("Zapisano miejsce: " + place.getName());
+                    } else {
+                        alreadyExists.add(place.getName());
+                        System.out.println("Miejsce już istnieje: " + place.getName());
+                    }
+
+                } catch (Exception ex) {
+                    System.err.println("Błąd podczas zapisywania miejsca " + place.getName() + ": " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+            }
+        }
+
+        // Show result message
+        StringBuilder message = new StringBuilder();
+        if (savedCount > 0) {
+            message.append("Zapisano ").append(savedCount).append(" nowych miejsc");
+        }
+        if (!alreadyExists.isEmpty()) {
+            if (message.length() > 0) message.append("\n");
+            message.append("Następujące miejsca już istniały:\n");
+            for (String name : alreadyExists) {
+                message.append("- ").append(name).append("\n");
+            }
+        }
+        if (savedCount == 0 && alreadyExists.isEmpty()) {
+            message.append("Nie wybrano żadnych miejsc do zapisania");
+        }
+
+        JOptionPane.showMessageDialog(this, message.toString());
+        statusLabel.setText("Operacja zapisywania zakończona");
     }
 
     @Subscribe

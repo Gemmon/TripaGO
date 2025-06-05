@@ -70,13 +70,13 @@ public class DatabaseManager {
             em.close();
         }
     }
-
-    public void savePlace(Place place) {
+    // Improved savePlace method in DatabaseManager.java
+    public boolean savePlace(Place place) {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
 
-            // Sprawdź czy miejsce już istnieje (unikaj duplikatów)
+            // Check if place already exists (avoid duplicates)
             List<Place> existingPlaces = em.createQuery(
                             "SELECT p FROM Place p WHERE p.name = :name AND p.address = :address", Place.class)
                     .setParameter("name", place.getName())
@@ -87,14 +87,35 @@ public class DatabaseManager {
                 em.persist(place);
                 em.getTransaction().commit();
                 System.out.println("Saved new place: " + place.getName());
+                return true;
             } else {
                 em.getTransaction().rollback();
                 System.out.println("Place already exists: " + place.getName());
+                return false;
             }
         } catch (Exception e) {
             em.getTransaction().rollback();
             System.err.println("Failed to save place: " + e.getMessage());
             e.printStackTrace();
+            return false;
+        } finally {
+            em.close();
+        }
+    }
+
+    // Add method to check if place exists without saving
+    public boolean placeExists(String name, String address) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            List<Place> existingPlaces = em.createQuery(
+                            "SELECT p FROM Place p WHERE p.name = :name AND p.address = :address", Place.class)
+                    .setParameter("name", name)
+                    .setParameter("address", address)
+                    .getResultList();
+            return !existingPlaces.isEmpty();
+        } catch (Exception e) {
+            System.err.println("Failed to check if place exists: " + e.getMessage());
+            return false;
         } finally {
             em.close();
         }
