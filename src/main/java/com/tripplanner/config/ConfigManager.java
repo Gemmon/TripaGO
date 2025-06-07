@@ -79,7 +79,7 @@ public class ConfigManager {
     }
 
     public String getGoogleApiKey() {
-        String key = config.getProperty("google.api.key", "YOUR_GOOGLE_API_KEY");
+        String key = config.getProperty("google.api.key", "GOOGLE_API_KEY");
         if ("YOUR_GOOGLE_API_KEY".equals(key)) {
             System.err.println("Warning: Google API key is not configured!");
         }
@@ -87,8 +87,8 @@ public class ConfigManager {
     }
 
     public String getWeatherApiKey() {
-        String key = config.getProperty("weather.api.key", "YOUR_WEATHER_API_KEY");
-        if ("YOUR_WEATHER_API_KEY".equals(key)) {
+        String key = config.getProperty("weather.api.key", "WEATHER_API_KEY");
+        if ("WEATHER_API_KEY".equals(key)) {
             System.err.println("Warning: Weather API key is not configured!");
         }
         return key;

@@ -5,6 +5,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.URL;
+
 import com.tripplanner.model.Weather;
 import com.tripplanner.services.WeatherService;
 
@@ -62,7 +64,7 @@ public class SavedPlaceCard extends JPanel {
         JPanel detailsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
         detailsPanel.setBackground(Color.WHITE);
 
-        JLabel ratingLabel = new JLabel("★ " + String.format("%.1f", place.getRating()));
+        JLabel ratingLabel = new JLabel("Ocena: " + String.format("%.1f", place.getRating()));
         ratingLabel.setFont(new Font("Arial", Font.BOLD, 12));
         ratingLabel.setForeground(Color.ORANGE);
         detailsPanel.add(ratingLabel);
@@ -100,10 +102,15 @@ public class SavedPlaceCard extends JPanel {
         showOnMapButton.setFont(new Font("Arial", Font.PLAIN, 10));
         showOnMapButton.setPreferredSize(new Dimension(60, 25));
         showOnMapButton.addActionListener(e -> {
-            // Tu można dodać funkcjonalność pokazania na mapie
-            JOptionPane.showMessageDialog(this,
-                    "Współrzędne:\nSzerokość: " + place.getLatitude() +
-                            "\nDługość: " + place.getLongitude());
+            String url = String.format("https://www.google.com/maps/search/?api=1&query=%f,%f",
+                    place.getLatitude(), place.getLongitude());
+            try {
+                Desktop.getDesktop().browse(new URL(url).toURI());
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Nie udało się otworzyć Google Maps:\n" + ex.getMessage(),
+                        "Błąd", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         buttonPanel.add(deleteButton);

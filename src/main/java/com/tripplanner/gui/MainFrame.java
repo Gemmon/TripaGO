@@ -250,6 +250,7 @@ public class MainFrame extends JFrame {
                 PlaceCard card = (PlaceCard) comp;
                 Place place = card.getPlace();
 
+
                 try {
                     // Check if place already exists before saving
                     List<Place> existingPlaces = DatabaseManager.getInstance().getAllPlaces();
@@ -270,6 +271,8 @@ public class MainFrame extends JFrame {
                     System.err.println("Błąd podczas zapisywania miejsca " + place.getName() + ": " + ex.getMessage());
                     ex.printStackTrace();
                 }
+
+                card.setSelected();
             }
         }
 

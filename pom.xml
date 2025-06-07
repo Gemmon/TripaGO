@@ -85,10 +85,6 @@
                 <version>3.1.0</version>
                 <configuration>
                     <mainClass>com.tripplanner.TripPlannerApp</mainClass>
-                    <args>
-                        <arg>--add-modules</arg>
-                        <arg>java.sql</arg>
-                    </args>
                 </configuration>
             </plugin>
 

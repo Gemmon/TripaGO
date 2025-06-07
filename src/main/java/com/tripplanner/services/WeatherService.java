@@ -18,15 +18,6 @@ public class WeatherService {
             try {
                 String apiKey = ConfigManager.getInstance().getWeatherApiKey();
 
-                // Debug: sprawdź czy klucz API jest prawidłowy
-                System.out.println("Weather API Key: " + (apiKey != null && !apiKey.equals("YOUR_WEATHER_API_KEY") ?
-                        apiKey.substring(0, Math.min(8, apiKey.length())) + "..." : "NOT_SET"));
-
-                if (apiKey == null || apiKey.equals("YOUR_WEATHER_API_KEY")) {
-                    System.err.println("Weather API key is not configured properly!");
-                    return null;
-                }
-
                 // Encode location parameter to handle special characters
                 String encodedLocation = URLEncoder.encode(location, StandardCharsets.UTF_8);
                 String urlStr = WEATHER_API_URL + "?q=" + encodedLocation + "&appid=" + apiKey + "&units=metric&lang=pl";

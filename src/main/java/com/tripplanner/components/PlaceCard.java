@@ -7,7 +7,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class PlaceCard extends JPanel {
-    private Place place; // Store the complete Place object
+    private Place place;
     private boolean selected = false;
 
     public PlaceCard(Place place) {
@@ -62,7 +62,7 @@ public class PlaceCard extends JPanel {
         // Draw rating
         g2d.setFont(new Font("Arial", Font.BOLD, 12));
         g2d.setColor(Color.ORANGE);
-        g2d.drawString("★ " + String.format("%.1f", place.getRating()), 10, 60);
+        g2d.drawString("Ocena: " + String.format("%.1f", place.getRating()), 10, 60);
 
         // Draw selection indicator
         if (selected) {
@@ -77,16 +77,8 @@ public class PlaceCard extends JPanel {
         return selected;
     }
 
-    public String getPlaceName() {
-        return place.getName();
-    }
-
-    public String getAddress() {
-        return place.getAddress();
-    }
-
-    public double getRating() {
-        return place.getRating();
+    public void setSelected() {
+        selected = false;
     }
 
     public Place getPlace() {
