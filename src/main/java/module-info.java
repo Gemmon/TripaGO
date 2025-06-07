@@ -5,7 +5,7 @@ module com.tripplanner {
     requires java.naming;
     requires java.xml.bind;
 
-    // These are automatic modules (libraries without module-info)
+    // Automatic modules
     requires org.apache.commons.configuration2;
     requires org.apache.commons.io;
     requires org.apache.commons.lang3;
@@ -22,6 +22,6 @@ module com.tripplanner {
     exports com.tripplanner.services;
     exports com.tripplanner.events;
 
-    // Open packages for reflection (needed by Hibernate)
+    // Hibernate
     opens com.tripplanner.model to org.hibernate.orm.core;
 }
