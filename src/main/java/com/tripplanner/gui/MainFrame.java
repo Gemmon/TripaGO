@@ -32,12 +32,11 @@ public class MainFrame extends JFrame {
         setupLayout();
         registerEventHandlers();
 
-        setTitle("Planowanie Wycieczek - Debug Version");
+        setTitle("Planowanie Wycieczek");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 700);
         setLocationRelativeTo(null);
 
-        // Dodaj przykładowe dane na start
         showStartupMessage();
     }
 
@@ -54,9 +53,9 @@ public class MainFrame extends JFrame {
     }
 
     private void initializeComponents() {
-        locationField = new JTextField("Warszawa", 20); // Dodaj domyślną wartość
+        locationField = new JTextField("", 20);
         typeComboBox = new JComboBox<>(new String[]{
-                "restaurant", "tourist_attraction", "lodging", "museum", "park"
+                "restaurant", "tourist_attraction", "lodging", "museum", "park", "movie_theater", "night_club", "clothing_store","gym"
         });
 
         placesPanel = new JPanel();
@@ -111,16 +110,7 @@ public class MainFrame extends JFrame {
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.add(weatherWidget, BorderLayout.NORTH);
 
-        // Dodaj panel z informacjami debugowymi
-        JTextArea debugArea = new JTextArea(10, 30);
-        debugArea.setEditable(false);
-        debugArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
-        JScrollPane debugScroll = new JScrollPane(debugArea);
-        debugScroll.setBorder(BorderFactory.createTitledBorder("Logi debugowe"));
-        rightPanel.add(debugScroll, BorderLayout.CENTER);
 
-        // Przekieruj System.out do debugArea
-        redirectSystemOut(debugArea);
 
         mainPanel.add(rightPanel, BorderLayout.EAST);
 
@@ -133,19 +123,6 @@ public class MainFrame extends JFrame {
         add(statusPanel, BorderLayout.SOUTH);
     }
 
-    private void redirectSystemOut(JTextArea textArea) {
-        // Prosty system przekierowania logów do GUI
-        System.setOut(new java.io.PrintStream(System.out) {
-            @Override
-            public void println(String s) {
-                super.println(s);
-                SwingUtilities.invokeLater(() -> {
-                    textArea.append(s + "\n");
-                    textArea.setCaretPosition(textArea.getDocument().getLength());
-                });
-            }
-        });
-    }
 
     private void showSavedPlacesDialog() {
         SavedPlacesDialog dialog = new SavedPlacesDialog(this);
@@ -309,13 +286,6 @@ public class MainFrame extends JFrame {
                     weather.getWindSpeed()
             );
 
-            // Zapis pogody do bazy danych
-            try {
-                DatabaseManager.getInstance().saveWeather(weather);
-                System.out.println("Pogoda zapisana do bazy danych");
-            } catch (Exception e) {
-                System.err.println("Błąd zapisu pogody: " + e.getMessage());
-            }
         });
     }
 }

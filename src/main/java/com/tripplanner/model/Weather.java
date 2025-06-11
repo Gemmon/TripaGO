@@ -28,7 +28,6 @@ public class Weather {
     @Column(name = "timestamp")
     private LocalDateTime timestamp;
 
-    // Konstruktory
     public Weather() {}
 
     public Weather(String location, double temperature, String description, int humidity, double windSpeed) {
@@ -39,10 +38,6 @@ public class Weather {
         this.windSpeed = windSpeed;
         this.timestamp = LocalDateTime.now();
     }
-
-    // Gettery i settery
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
@@ -59,6 +54,4 @@ public class Weather {
     public double getWindSpeed() { return windSpeed; }
     public void setWindSpeed(double windSpeed) { this.windSpeed = windSpeed; }
 
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
 }

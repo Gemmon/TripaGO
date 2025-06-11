@@ -15,7 +15,6 @@ import java.util.concurrent.CompletableFuture;
 
 public class GooglePlacesService {
     private static final String PLACES_API_URL = "https://maps.googleapis.com/maps/api/place/textsearch/json";
-    private static final String GEOCODING_API_URL = "https://maps.googleapis.com/maps/api/geocode/json";
 
     public CompletableFuture<List<Place>> searchPlaces(String location, String type) {
         return CompletableFuture.supplyAsync(() -> {
@@ -26,7 +25,6 @@ public class GooglePlacesService {
                 System.out.println("Google API Key: " + (apiKey != null && !apiKey.equals("YOUR_GOOGLE_API_KEY") ?
                         apiKey.substring(0, Math.min(8, apiKey.length())) + "..." : "NOT_SET"));
 
-                // Użyj Text Search API zamiast Nearby Search - bardziej elastyczne
                 String query = URLEncoder.encode(type + " in " + location, StandardCharsets.UTF_8);
                 String urlStr = PLACES_API_URL + "?query=" + query + "&key=" + apiKey;
 
@@ -46,7 +44,7 @@ public class GooglePlacesService {
                     String response = IOUtils.toString(conn.getInputStream(), StandardCharsets.UTF_8);
                     System.out.println("Google Places API Response length: " + response.length());
 
-                    List<Place> places = parsePlacesResponse(response);
+                    List<Place> places = parsePlacesResponse(response, location);
                     System.out.println("Found " + places.size() + " places");
                     return places;
                 }
@@ -60,7 +58,7 @@ public class GooglePlacesService {
         });
     }
 
-    private List<Place> parsePlacesResponse(String jsonResponse) {
+    private List<Place> parsePlacesResponse(String jsonResponse, String query) {
         List<Place> places = new ArrayList<>();
         try {
             JSONObject json = new JSONObject(jsonResponse);
@@ -87,18 +85,20 @@ public class GooglePlacesService {
 
             for (int i = 0; i < results.length(); i++) {
                 try {
-                    JSONObject placeJson = results.getJSONObject(i);
 
+                    JSONObject placeJson = results.getJSONObject(i);
+                    System.out.println(results.getJSONObject(i));
+                    String city = capitalizeFirstLetter(query);
                     String name = placeJson.optString("name", "Unknown Place");
                     String address = placeJson.optString("formatted_address", "");
                     String cleanedAddress = removePostalCodeFromAddress(address);
-                    String city = extractCityFromAddress(address);
+
 
                     System.out.println("Miasto: " + city);
 
                     double rating = placeJson.optDouble("rating", 0.0);
 
-                    // Pobierz współrzędne
+                    // współrzędne
                     double lat = 0.0, lng = 0.0;
                     if (placeJson.has("geometry") && placeJson.getJSONObject("geometry").has("location")) {
                         JSONObject location = placeJson.getJSONObject("geometry").getJSONObject("location");
@@ -106,7 +106,7 @@ public class GooglePlacesService {
                         lng = location.optDouble("lng", 0.0);
                     }
 
-                    // Pobierz typ
+                    // typ
                     String placeType = "";
                     if (placeJson.has("types")) {
                         JSONArray types = placeJson.getJSONArray("types");
@@ -132,18 +132,13 @@ public class GooglePlacesService {
         return places;
     }
 
-    private String extractCityFromAddress(String formattedAddress) {
-        String[] parts = formattedAddress.split(",");
-        if (parts.length >= 2) {
-            String cityPart = parts[parts.length - 2].trim(); // np. "00-001 Warszawa"
-            // Usuń kod pocztowy (ciąg 2-3 cyfr + '-' + 3 cyfry)
-            return cityPart.replaceAll("\\b\\d{2,3}-\\d{3}\\s*", "").trim();
-        }
-        return "";
+    private String capitalizeFirstLetter(String input) {
+        if (input == null || input.isEmpty()) return input;
+        return input.substring(0, 1).toUpperCase() + input.substring(1);
     }
 
     private String removePostalCodeFromAddress(String address) {
-        // Usuń kod pocztowy w formacie "00-001" itp.
+
         return address.replaceAll("\\b\\d{2,3}-\\d{3}\\b", "").trim().replaceAll(" ,", ",");
     }
 

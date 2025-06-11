@@ -77,11 +77,12 @@ public class SavedPlacesDialog extends JDialog {
 
     private void loadSavedPlaces() {
         SwingUtilities.invokeLater(() -> {
-            System.out.println("=== ŁADOWANIE ZAPISANYCH MIEJSC ===");
-
+            System.out.println("ŁADOWANIE ZAPISANYCH MIEJSC");
+            filterComboBox.setSelectedItem("Wszystkie");
             try {
                 allPlaces = DatabaseManager.getInstance().getAllPlaces();
                 System.out.println("Załadowano " + allPlaces.size() + " zapisanych miejsc");
+
 
                 displayPlaces(allPlaces);
                 updateCountLabel(allPlaces.size());
@@ -159,7 +160,6 @@ public class SavedPlacesDialog extends JDialog {
 
             if (deleted) {
                 loadSavedPlaces(); // Odśwież listę
-                JOptionPane.showMessageDialog(this, "Miejsce zostało usunięte", "Sukces", JOptionPane.INFORMATION_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(this, "Nie udało się usunąć miejsca", "Błąd", JOptionPane.ERROR_MESSAGE);
             }
@@ -183,7 +183,7 @@ public class SavedPlacesDialog extends JDialog {
             try {
                 java.io.File file = fileChooser.getSelectedFile();
                 try (java.io.PrintWriter writer = new java.io.PrintWriter(file)) {
-                    writer.println("=== ZAPISANE MIEJSCA ===");
+                    writer.println("ZAPISANE MIEJSCA");
                     writer.println("Data eksportu: " + java.time.LocalDateTime.now());
                     writer.println("Liczba miejsc: " + allPlaces.size());
                     writer.println();
@@ -191,10 +191,8 @@ public class SavedPlacesDialog extends JDialog {
                     for (Place place : allPlaces) {
                         writer.println("Nazwa: " + place.getName());
                         writer.println("Adres: " + place.getAddress());
-                        writer.println("Ocena: " + place.getRating() + "★");
+                        writer.println("Ocena: " + place.getRating());
                         writer.println("Typ: " + place.getType());
-                        writer.println("Współrzędne: " + place.getLatitude() + ", " + place.getLongitude());
-                        writer.println("---");
                     }
                 }
 

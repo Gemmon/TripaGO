@@ -18,7 +18,6 @@ public class WeatherService {
             try {
                 String apiKey = ConfigManager.getInstance().getWeatherApiKey();
 
-                // Encode location parameter to handle special characters
                 String encodedLocation = URLEncoder.encode(location, StandardCharsets.UTF_8);
                 String urlStr = WEATHER_API_URL + "?q=" + encodedLocation + "&appid=" + apiKey + "&units=metric&lang=pl";
 
@@ -36,7 +35,6 @@ public class WeatherService {
 
                 if (responseCode == 200) {
                     String response = IOUtils.toString(conn.getInputStream(), StandardCharsets.UTF_8);
-                    System.out.println("Weather API Response: " + response.substring(0, Math.min(200, response.length())) + "...");
                     return parseWeatherResponse(response, location);
                 } else {
                     String errorResponse = "";

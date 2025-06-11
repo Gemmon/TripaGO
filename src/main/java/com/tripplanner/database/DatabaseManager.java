@@ -24,14 +24,14 @@ public class DatabaseManager {
 
     public void initializeDatabase() {
         try {
-            // Create data directory if it doesn't exist
+            // Create data if doesnt exist
             File dataDir = new File("data");
             if (!dataDir.exists()) {
                 dataDir.mkdirs();
                 System.out.println("Created data directory: " + dataDir.getAbsolutePath());
             }
 
-            // Create EntityManagerFactory with programmatic configuration
+            // Creating EntityManagerFactory
             Map<String, Object> configOverrides = new HashMap<>();
             configOverrides.put("javax.persistence.jdbc.url", ConfigManager.getInstance().getDatabaseUrl());
             configOverrides.put("javax.persistence.jdbc.user", ConfigManager.getInstance().getDatabaseUser());
@@ -59,7 +59,7 @@ public class DatabaseManager {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
-            // Simple test query
+            // test query
             em.createQuery("SELECT COUNT(p) FROM Place p").getSingleResult();
             em.getTransaction().commit();
             System.out.println("Database connection test successful!");
@@ -70,13 +70,12 @@ public class DatabaseManager {
             em.close();
         }
     }
-    // Improved savePlace method in DatabaseManager.java
+
     public boolean savePlace(Place place) {
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
 
-            // Check if place already exists (avoid duplicates)
             List<Place> existingPlaces = em.createQuery(
                             "SELECT p FROM Place p WHERE p.name = :name AND p.address = :address", Place.class)
                     .setParameter("name", place.getName())
@@ -103,40 +102,6 @@ public class DatabaseManager {
         }
     }
 
-    // Add method to check if place exists without saving
-    public boolean placeExists(String name, String address) {
-        EntityManager em = emf.createEntityManager();
-        try {
-            List<Place> existingPlaces = em.createQuery(
-                            "SELECT p FROM Place p WHERE p.name = :name AND p.address = :address", Place.class)
-                    .setParameter("name", name)
-                    .setParameter("address", address)
-                    .getResultList();
-            return !existingPlaces.isEmpty();
-        } catch (Exception e) {
-            System.err.println("Failed to check if place exists: " + e.getMessage());
-            return false;
-        } finally {
-            em.close();
-        }
-    }
-
-    public void saveWeather(Weather weather) {
-        EntityManager em = emf.createEntityManager();
-        try {
-            em.getTransaction().begin();
-            em.persist(weather);
-            em.getTransaction().commit();
-            System.out.println("Saved weather data for: " + weather.getLocation());
-        } catch (Exception e) {
-            em.getTransaction().rollback();
-            System.err.println("Failed to save weather: " + e.getMessage());
-            e.printStackTrace();
-        } finally {
-            em.close();
-        }
-    }
-
     public List<Place> getAllPlaces() {
         EntityManager em = emf.createEntityManager();
         try {
@@ -146,22 +111,6 @@ public class DatabaseManager {
         } catch (Exception e) {
             System.err.println("Failed to get places: " + e.getMessage());
             return List.of(); // Return empty list instead of null
-        } finally {
-            em.close();
-        }
-    }
-
-    public List<Place> getPlacesByType(String type) {
-        EntityManager em = emf.createEntityManager();
-        try {
-            List<Place> places = em.createQuery("SELECT p FROM Place p WHERE p.type = :type ORDER BY p.name", Place.class)
-                    .setParameter("type", type)
-                    .getResultList();
-            System.out.println("Retrieved " + places.size() + " saved places of type: " + type);
-            return places;
-        } catch (Exception e) {
-            System.err.println("Failed to get places by type: " + e.getMessage());
-            return List.of();
         } finally {
             em.close();
         }
@@ -191,21 +140,6 @@ public class DatabaseManager {
         }
     }
 
-    public Weather getLatestWeather(String location) {
-        EntityManager em = emf.createEntityManager();
-        try {
-            List<Weather> results = em.createQuery("SELECT w FROM Weather w WHERE w.location = :location ORDER BY w.timestamp DESC", Weather.class)
-                    .setParameter("location", location)
-                    .setMaxResults(1)
-                    .getResultList();
-            return results.isEmpty() ? null : results.get(0);
-        } catch (Exception e) {
-            System.err.println("Failed to get weather for " + location + ": " + e.getMessage());
-            return null;
-        } finally {
-            em.close();
-        }
-    }
 
     public void shutdown() {
         if (emf != null && emf.isOpen()) {

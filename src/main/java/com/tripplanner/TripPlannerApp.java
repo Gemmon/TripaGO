@@ -12,22 +12,22 @@ public class TripPlannerApp {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
-            System.err.println("Could not set system look and feel: " + e.getMessage());
+            System.err.println("Could not set system" + e.getMessage());
         }
 
         SwingUtilities.invokeLater(() -> {
             try {
-                System.out.println("Loading configuration...");
+                System.out.println("Loading configuration");
                 ConfigManager.getInstance().loadConfig();
 
-                System.out.println("Initializing database...");
+                System.out.println("Initializing database");
                 DatabaseManager.getInstance().initializeDatabase();
 
-                System.out.println("Starting main frame...");
+                System.out.println("Starting main frame");
                 MainFrame mainFrame = new MainFrame();
                 mainFrame.setVisible(true);
 
-                System.out.println("Application started successfully!");
+                System.out.println("Application started");
             } catch (Exception e) {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(null,

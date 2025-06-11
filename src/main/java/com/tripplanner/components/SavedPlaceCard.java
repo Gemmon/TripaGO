@@ -60,21 +60,16 @@ public class SavedPlaceCard extends JPanel {
         addressLabel.setForeground(Color.GRAY);
         infoPanel.add(addressLabel);
 
-        // Ocena i typ
-        JPanel detailsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
-        detailsPanel.setBackground(Color.WHITE);
 
         JLabel ratingLabel = new JLabel("Ocena: " + String.format("%.1f", place.getRating()));
         ratingLabel.setFont(new Font("Arial", Font.BOLD, 12));
         ratingLabel.setForeground(Color.ORANGE);
-        detailsPanel.add(ratingLabel);
+        infoPanel.add(ratingLabel);
 
         JLabel typeLabel = new JLabel(" | " + place.getType());
         typeLabel.setFont(new Font("Arial", Font.PLAIN, 11));
         typeLabel.setForeground(Color.BLUE);
-        detailsPanel.add(typeLabel);
-
-        infoPanel.add(detailsPanel);
+        infoPanel.add(typeLabel);
 
         add(infoPanel, BorderLayout.CENTER);
 

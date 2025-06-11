@@ -30,7 +30,6 @@ public class Place {
     @Column(name = "type")
     private String type;
 
-    // Konstruktory
     public Place() {}
 
     public Place(String name, String city, String address, double rating, double latitude, double longitude, String type) {
@@ -43,7 +42,7 @@ public class Place {
         this.type = type;
     }
 
-    // Gettery i settery
+    // Gettery, settery
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
