@@ -17,6 +17,7 @@ public class PlaceCard extends JPanel {
         setBorder(BorderFactory.createLineBorder(Color.GRAY));
         setBackground(Color.WHITE);
 
+        // observers
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -38,7 +39,7 @@ public class PlaceCard extends JPanel {
         });
     }
 
-    // Keep the old constructor for backward compatibility
+    // old constructor
     public PlaceCard(String placeName, String city, String address, double rating) {
         this(new Place(placeName, city, address, rating, 0.0, 0.0, "unknown"));
     }
@@ -49,22 +50,22 @@ public class PlaceCard extends JPanel {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Draw place name
+        // name
         g2d.setFont(new Font("Arial", Font.BOLD, 14));
         g2d.setColor(Color.BLACK);
         g2d.drawString(place.getName(), 10, 20);
 
-        // Draw address
+        // address
         g2d.setFont(new Font("Arial", Font.PLAIN, 11));
         g2d.setColor(Color.GRAY);
         g2d.drawString(place.getAddress(), 10, 40);
 
-        // Draw rating
+        // rating
         g2d.setFont(new Font("Arial", Font.BOLD, 12));
         g2d.setColor(Color.ORANGE);
         g2d.drawString("Ocena: " + String.format("%.1f", place.getRating()), 10, 60);
 
-        // Draw selection indicator
+        // selection indicator
         if (selected) {
             g2d.setColor(Color.BLUE);
             g2d.setStroke(new BasicStroke(3));
@@ -72,7 +73,7 @@ public class PlaceCard extends JPanel {
         }
     }
 
-    // Getters
+    // getters
     public boolean isSelected() {
         return selected;
     }

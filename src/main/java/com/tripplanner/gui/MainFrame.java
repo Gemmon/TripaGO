@@ -49,7 +49,6 @@ public class MainFrame extends JFrame {
     private void initializeServices() {
         placesService = new GooglePlacesService();
         weatherService = new WeatherService();
-        EventBus.getInstance().register(this);
     }
 
     private void initializeComponents() {
@@ -74,7 +73,7 @@ public class MainFrame extends JFrame {
     private void setupLayout() {
         setLayout(new BorderLayout());
 
-        // Panel wyszukiwania
+        // panel wyszukiwania
         JPanel searchPanel = new JPanel(new FlowLayout());
         searchPanel.setBorder(BorderFactory.createTitledBorder("Wyszukiwanie"));
 
@@ -95,40 +94,36 @@ public class MainFrame extends JFrame {
         savedButton.addActionListener(e -> showSavedPlacesDialog());
         searchPanel.add(savedButton);
 
-
         add(searchPanel, BorderLayout.NORTH);
 
-        // Panel główny
+        // panel główny
         JPanel mainPanel = new JPanel(new BorderLayout());
 
-        // Panel miejsc
+        // panel miejsc
         JScrollPane placesScrollPane = new JScrollPane(placesPanel);
         placesScrollPane.setPreferredSize(new Dimension(600, 400));
+        placesScrollPane.getVerticalScrollBar().setUnitIncrement(23);
         mainPanel.add(placesScrollPane, BorderLayout.CENTER);
 
-        // Panel pogody
+        // panel pogody
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.add(weatherWidget, BorderLayout.NORTH);
-
-
 
         mainPanel.add(rightPanel, BorderLayout.EAST);
 
         add(mainPanel, BorderLayout.CENTER);
 
-        // Panel statusu
+        // panel statusu
         JPanel statusPanel = new JPanel(new BorderLayout());
         statusPanel.add(statusLabel, BorderLayout.WEST);
         statusPanel.add(progressBar, BorderLayout.CENTER);
         add(statusPanel, BorderLayout.SOUTH);
     }
 
-
     private void showSavedPlacesDialog() {
         SavedPlacesDialog dialog = new SavedPlacesDialog(this);
         dialog.setVisible(true);
     }
-
 
     private void registerEventHandlers() {
         EventBus.getInstance().register(this);
@@ -138,7 +133,7 @@ public class MainFrame extends JFrame {
         String location = locationField.getText().trim();
         String type = (String) typeComboBox.getSelectedItem();
 
-        System.out.println("=== ROZPOCZĘCIE WYSZUKIWANIA ===");
+        System.out.println("ROZPOCZĘCIE WYSZUKIWANIA");
         System.out.println("Lokalizacja: " + location);
         System.out.println("Typ: " + type);
 
@@ -150,16 +145,16 @@ public class MainFrame extends JFrame {
         statusLabel.setText("Wyszukiwanie...");
         progressBar.setVisible(true);
 
-        // Wyczyść poprzednie wyniki
+        // czyszczenie poprzednich wyników
         placesPanel.removeAll();
         placesPanel.revalidate();
         placesPanel.repaint();
 
-        // Asynchroniczne wyszukiwanie miejsc
+        // wyszukiwanie miejsc
         CompletableFuture<List<Place>> placesTask = placesService.searchPlaces(location, type);
         CompletableFuture<Weather> weatherTask = weatherService.getWeather(location);
 
-        // Kombinowanie zadań
+        // czekanie na zakończenie wyszukiwania
         CompletableFuture.allOf(placesTask, weatherTask).thenRunAsync(() -> {
             SwingUtilities.invokeLater(() -> {
                 try {
@@ -186,10 +181,11 @@ public class MainFrame extends JFrame {
             });
         });
     }
+
     @Subscribe
     public void handlePlacesFound(PlacesFoundEvent event) {
         SwingUtilities.invokeLater(() -> {
-            System.out.println("=== OBSŁUGA ZDARZENIA PLACES_FOUND ===");
+            System.out.println("OBSŁUGA ZDARZENIA PLACES_FOUND");
             System.out.println("Liczba miejsc: " + event.getPlaces().size());
 
             placesPanel.removeAll();
@@ -201,7 +197,6 @@ public class MainFrame extends JFrame {
                 System.out.println("Brak miejsc do wyświetlenia");
             } else {
                 for (Place place : event.getPlaces()) {
-                    // Use the new constructor that takes a Place object
                     PlaceCard card = new PlaceCard(place);
                     placesPanel.add(card);
                     placesPanel.add(Box.createVerticalStrut(5));
@@ -215,21 +210,33 @@ public class MainFrame extends JFrame {
         });
     }
 
-    // Updated saveSelectedPlaces method
+    @Subscribe
+    public void handleWeatherUpdated(WeatherUpdatedEvent event) {
+        SwingUtilities.invokeLater(() -> {
+            System.out.println("OBSŁUGA ZDARZENIA WEATHER_UPDATED");
+            Weather weather = event.getWeather();
+            weatherWidget.updateWeather(
+                    weather.getLocation(),
+                    weather.getTemperature(),
+                    weather.getDescription(),
+                    weather.getHumidity(),
+                    weather.getWindSpeed()
+            );
+        });
+    }
+
     private void saveSelectedPlaces(ActionEvent e) {
         Component[] components = placesPanel.getComponents();
         int savedCount = 0;
         List<String> alreadyExists = new ArrayList<>();
 
-        // Collect and save selected places
         for (Component comp : components) {
             if (comp instanceof PlaceCard && ((PlaceCard) comp).isSelected()) {
                 PlaceCard card = (PlaceCard) comp;
                 Place place = card.getPlace();
 
-
                 try {
-                    // Check if place already exists before saving
+                    // sprawdzenie czy istniało
                     List<Place> existingPlaces = DatabaseManager.getInstance().getAllPlaces();
                     boolean exists = existingPlaces.stream()
                             .anyMatch(p -> p.getName().equals(place.getName()) &&
@@ -253,7 +260,7 @@ public class MainFrame extends JFrame {
             }
         }
 
-        // Show result message
+        // rezultat
         StringBuilder message = new StringBuilder();
         if (savedCount > 0) {
             message.append("Zapisano ").append(savedCount).append(" nowych miejsc");
@@ -271,21 +278,5 @@ public class MainFrame extends JFrame {
 
         JOptionPane.showMessageDialog(this, message.toString());
         statusLabel.setText("Operacja zapisywania zakończona");
-    }
-
-    @Subscribe
-    public void handleWeatherUpdated(WeatherUpdatedEvent event) {
-        SwingUtilities.invokeLater(() -> {
-            System.out.println("=== OBSŁUGA ZDARZENIA WEATHER_UPDATED ===");
-            Weather weather = event.getWeather();
-            weatherWidget.updateWeather(
-                    weather.getLocation(),
-                    weather.getTemperature(),
-                    weather.getDescription(),
-                    weather.getHumidity(),
-                    weather.getWindSpeed()
-            );
-
-        });
     }
 }

@@ -7,7 +7,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
 
-import com.tripplanner.model.Weather;
 import com.tripplanner.services.WeatherService;
 
 
@@ -30,7 +29,7 @@ public class SavedPlaceCard extends JPanel {
         ));
         setBackground(Color.WHITE);
 
-        // Panel główny z informacjami
+        // panel główny
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBackground(Color.WHITE);
@@ -43,24 +42,25 @@ public class SavedPlaceCard extends JPanel {
         loadWeather();
 
 
-        // Nazwa miejsca
+        // nazwa
         JLabel nameLabel = new JLabel(place.getName());
         nameLabel.setFont(new Font("Arial", Font.BOLD, 16));
         nameLabel.setForeground(Color.BLACK);
         infoPanel.add(nameLabel);
 
+        // miasto
         JLabel cityLabel = new JLabel(place.getCity());
         cityLabel.setFont(new Font("Arial", Font.BOLD, 16));
         cityLabel.setForeground(Color.BLACK);
         infoPanel.add(cityLabel);
 
-        // Adres
+        // adres
         JLabel addressLabel = new JLabel(place.getAddress());
         addressLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         addressLabel.setForeground(Color.GRAY);
         infoPanel.add(addressLabel);
 
-
+        // ocena
         JLabel ratingLabel = new JLabel("Ocena: " + String.format("%.1f", place.getRating()));
         ratingLabel.setFont(new Font("Arial", Font.BOLD, 12));
         ratingLabel.setForeground(Color.ORANGE);
@@ -73,7 +73,7 @@ public class SavedPlaceCard extends JPanel {
 
         add(infoPanel, BorderLayout.CENTER);
 
-        // Panel z przyciskami
+        // panel z przyciskami
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
         buttonPanel.setBackground(Color.WHITE);

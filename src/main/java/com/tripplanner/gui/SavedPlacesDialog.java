@@ -1,26 +1,28 @@
 package com.tripplanner.gui;
 
 import com.tripplanner.components.SavedPlaceCard;
-import com.tripplanner.database.DatabaseManager;
+import com.tripplanner.events.*;
 import com.tripplanner.model.Place;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
 
 public class SavedPlacesDialog extends JDialog {
     private JPanel placesPanel;
     private JComboBox<String> filterComboBox;
     private JLabel countLabel;
-    private List<Place> allPlaces;
+    private List<Place> currentPlaces;
 
     public SavedPlacesDialog(Frame parent) {
         super(parent, "Zapisane miejsca", true);
         initializeComponents();
         setupLayout();
-        loadSavedPlaces();
+
+        EventBus.getInstance().register(this);
+
+        // żądanie załadowania danych
+        EventBus.getInstance().post(new LoadSavedPlacesRequest());
 
         setSize(600, 500);
         setLocationRelativeTo(parent);
@@ -31,9 +33,9 @@ public class SavedPlacesDialog extends JDialog {
         placesPanel.setLayout(new BoxLayout(placesPanel, BoxLayout.Y_AXIS));
         placesPanel.setBackground(Color.WHITE);
 
-        // Filtr typu
         filterComboBox = new JComboBox<>(new String[]{
-                "Wszystkie", "restaurant", "tourist_attraction", "lodging", "museum", "park"
+                "Wszystkie", "restaurant", "tourist_attraction", "lodging",
+                "museum", "park", "movie_theater", "night_club", "clothing_store", "gym"
         });
         filterComboBox.addActionListener(this::filterPlaces);
 
@@ -43,7 +45,7 @@ public class SavedPlacesDialog extends JDialog {
     private void setupLayout() {
         setLayout(new BorderLayout());
 
-        // Panel górny z filtrem
+        // panel górny z filtrem
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         topPanel.add(new JLabel("Filtruj według typu:"));
         topPanel.add(filterComboBox);
@@ -51,18 +53,21 @@ public class SavedPlacesDialog extends JDialog {
         topPanel.add(countLabel);
 
         JButton refreshButton = new JButton("Odśwież");
-        refreshButton.addActionListener(e -> loadSavedPlaces());
+        refreshButton.addActionListener(e -> {
+            String currentFilter = (String) filterComboBox.getSelectedItem();
+            EventBus.getInstance().post(new LoadSavedPlacesRequest(currentFilter));
+        });
         topPanel.add(refreshButton);
 
         add(topPanel, BorderLayout.NORTH);
 
-        // Przewijany panel z miejscami
+        // przewijany panel z miejscami
         JScrollPane scrollPane = new JScrollPane(placesPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(23);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Panel dolny z przyciskami
+        // panel dolny z przyciskami
         JPanel bottomPanel = new JPanel(new FlowLayout());
         JButton closeButton = new JButton("Zamknij");
         closeButton.addActionListener(e -> dispose());
@@ -75,30 +80,32 @@ public class SavedPlacesDialog extends JDialog {
         add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    private void loadSavedPlaces() {
+    @Subscribe
+    public void onPlacesLoaded(SavedPlacesLoadedEvent event) {
         SwingUtilities.invokeLater(() -> {
-            System.out.println("ŁADOWANIE ZAPISANYCH MIEJSC");
-            filterComboBox.setSelectedItem("Wszystkie");
-            try {
-                allPlaces = DatabaseManager.getInstance().getAllPlaces();
-                System.out.println("Załadowano " + allPlaces.size() + " zapisanych miejsc");
+            if (event.isSuccess()) {
+                this.currentPlaces = event.getPlaces();
+                displayPlaces(currentPlaces);
+                updateCountLabel(currentPlaces.size());
 
-
-                displayPlaces(allPlaces);
-                updateCountLabel(allPlaces.size());
-
-                if (allPlaces.isEmpty()) {
+                if (currentPlaces.isEmpty()) {
                     showNoPlacesMessage();
                 }
-
-            } catch (Exception e) {
-                System.err.println("Błąd podczas ładowania zapisanych miejsc: " + e.getMessage());
-                e.printStackTrace();
-
+            } else {
                 JOptionPane.showMessageDialog(this,
-                        "Błąd podczas ładowania zapisanych miejsc:\n" + e.getMessage(),
-                        "Błąd",
-                        JOptionPane.ERROR_MESSAGE);
+                        "Błąd podczas ładowania zapisanych miejsc:\n" + event.getErrorMessage(),
+                        "Błąd", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+    }
+
+    @Subscribe
+    public void onPlaceDeleted(PlaceDeletedEvent event) {
+        SwingUtilities.invokeLater(() -> {
+            if (!event.isSuccess()) {
+                JOptionPane.showMessageDialog(this,
+                        "Nie udało się usunąć miejsca: " + event.getErrorMessage(),
+                        "Błąd", JOptionPane.ERROR_MESSAGE);
             }
         });
     }
@@ -129,50 +136,24 @@ public class SavedPlacesDialog extends JDialog {
     }
 
     private void filterPlaces(ActionEvent e) {
-        if (allPlaces == null) return;
-
         String selectedType = (String) filterComboBox.getSelectedItem();
-        List<Place> filteredPlaces;
-
-        if ("Wszystkie".equals(selectedType)) {
-            filteredPlaces = allPlaces;
-        } else {
-            List<Place> list = new ArrayList<>();
-            for (Place place : allPlaces) {
-                if (selectedType.equals(place.getType())) {
-                    list.add(place);
-                }
-            }
-            filteredPlaces = list;
-        }
-
-        System.out.println("Filtrowanie według typu: " + selectedType + ", znaleziono: " + filteredPlaces.size());
-        displayPlaces(filteredPlaces);
-        updateCountLabel(filteredPlaces.size());
+        EventBus.getInstance().post(new LoadSavedPlacesRequest(selectedType));
     }
 
     private void deletePlace(ActionEvent e) {
         try {
             Long placeId = Long.parseLong(e.getActionCommand());
-            System.out.println("Usuwanie miejsca o ID: " + placeId);
-
-            boolean deleted = DatabaseManager.getInstance().deletePlace(placeId);
-
-            if (deleted) {
-                loadSavedPlaces(); // Odśwież listę
-            } else {
-                JOptionPane.showMessageDialog(this, "Nie udało się usunąć miejsca", "Błąd", JOptionPane.ERROR_MESSAGE);
-            }
-
-        } catch (Exception ex) {
-            System.err.println("Błąd podczas usuwania miejsca: " + ex.getMessage());
-            JOptionPane.showMessageDialog(this, "Błąd podczas usuwania miejsca", "Błąd", JOptionPane.ERROR_MESSAGE);
+            EventBus.getInstance().post(new DeletePlaceRequest(placeId));
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Błąd parsowania ID miejsca", "Błąd", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void exportPlaces(ActionEvent e) {
-        if (allPlaces == null || allPlaces.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Brak miejsc do eksportu", "Informacja", JOptionPane.INFORMATION_MESSAGE);
+        if (currentPlaces == null || currentPlaces.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Brak miejsc do eksportu",
+                    "Informacja", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
@@ -185,27 +166,37 @@ public class SavedPlacesDialog extends JDialog {
                 try (java.io.PrintWriter writer = new java.io.PrintWriter(file)) {
                     writer.println("ZAPISANE MIEJSCA");
                     writer.println("Data eksportu: " + java.time.LocalDateTime.now());
-                    writer.println("Liczba miejsc: " + allPlaces.size());
+                    writer.println("Liczba miejsc: " + currentPlaces.size());
                     writer.println();
 
-                    for (Place place : allPlaces) {
+                    for (Place place : currentPlaces) {
                         writer.println("Nazwa: " + place.getName());
                         writer.println("Adres: " + place.getAddress());
                         writer.println("Ocena: " + place.getRating());
                         writer.println("Typ: " + place.getType());
+                        writer.println();
                     }
                 }
 
-                JOptionPane.showMessageDialog(this, "Miejsca zostały wyeksportowane do pliku", "Sukces", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Miejsca zostały wyeksportowane do pliku", "Sukces",
+                        JOptionPane.INFORMATION_MESSAGE);
 
             } catch (Exception ex) {
-                System.err.println("Błąd podczas eksportu: " + ex.getMessage());
-                JOptionPane.showMessageDialog(this, "Błąd podczas eksportu do pliku", "Błąd", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Błąd podczas eksportu do pliku: " + ex.getMessage(),
+                        "Błąd", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
     private void updateCountLabel(int count) {
         countLabel.setText("Liczba miejsc: " + count);
+    }
+
+    @Override
+    public void dispose() {
+        EventBus.getInstance().unregister(this);
+        super.dispose();
     }
 }

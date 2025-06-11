@@ -33,7 +33,7 @@ public class EventBus {
         eventExecutor.submit(() -> {
             for (Object subscriber : subscribers) {
                 try {
-                    // Wykorzystanie Reflection API
+                    // Reflection API
                     Method[] methods = MethodUtils.getMethodsWithAnnotation(subscriber.getClass(), Subscribe.class);
                     for (Method method : methods) {
                         if (method.getParameterTypes().length == 1 &&

@@ -2,7 +2,6 @@ package com.tripplanner.database;
 
 import com.tripplanner.config.ConfigManager;
 import com.tripplanner.model.Place;
-import com.tripplanner.model.Weather;
 import javax.persistence.*;
 import java.io.File;
 import java.util.HashMap;
@@ -24,14 +23,14 @@ public class DatabaseManager {
 
     public void initializeDatabase() {
         try {
-            // Create data if doesnt exist
+            // create data if doesnt exist
             File dataDir = new File("data");
             if (!dataDir.exists()) {
                 dataDir.mkdirs();
                 System.out.println("Created data directory: " + dataDir.getAbsolutePath());
             }
 
-            // Creating EntityManagerFactory
+            // creating EntityManagerFactory
             Map<String, Object> configOverrides = new HashMap<>();
             configOverrides.put("javax.persistence.jdbc.url", ConfigManager.getInstance().getDatabaseUrl());
             configOverrides.put("javax.persistence.jdbc.user", ConfigManager.getInstance().getDatabaseUser());
@@ -44,7 +43,7 @@ public class DatabaseManager {
 
             emf = Persistence.createEntityManagerFactory("tripplanner", configOverrides);
 
-            // Test the connection
+            // test connection
             testConnection();
             System.out.println("Database initialized successfully!");
 
@@ -140,11 +139,4 @@ public class DatabaseManager {
         }
     }
 
-
-    public void shutdown() {
-        if (emf != null && emf.isOpen()) {
-            emf.close();
-            System.out.println("Database connection closed.");
-        }
-    }
 }

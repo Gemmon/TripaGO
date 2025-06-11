@@ -37,22 +37,22 @@ public class WeatherWidget extends JPanel {
             return;
         }
 
-        // Lokalizacja
+        // lokalizacja
         g2d.setFont(new Font("Arial", Font.BOLD, 14));
         g2d.setColor(Color.BLACK);
         g2d.drawString(location, 20, 30);
 
-        // Temperatura
+        // temperatura
         g2d.setFont(new Font("Arial", Font.BOLD, 24));
         g2d.setColor(temperature > 20 ? Color.RED : Color.BLUE);
         g2d.drawString(String.format("%.1f°C", temperature), 20, 60);
 
-        // Opis
+        // opis
         g2d.setFont(new Font("Arial", Font.PLAIN, 12));
         g2d.setColor(Color.DARK_GRAY);
         g2d.drawString(description, 20, 80);
 
-        // Wilgotność i wiatr
+        // wilgotność i wiatr
         g2d.drawString("Wilgotność: " + humidity + "%", 20, 100);
         g2d.drawString("Wiatr: " + String.format("%.1f", windSpeed) + " m/s", 20, 120);
     }
