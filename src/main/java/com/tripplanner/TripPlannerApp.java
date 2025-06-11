@@ -23,6 +23,11 @@ public class TripPlannerApp {
                 System.out.println("Initializing database");
                 DatabaseManager.getInstance().initializeDatabase();
 
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    System.out.println("Shutting down application...");
+                    DatabaseManager.getInstance().shutdown();
+                }));
+
                 System.out.println("Starting main frame");
                 MainFrame mainFrame = new MainFrame();
                 mainFrame.setVisible(true);

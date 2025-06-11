@@ -139,4 +139,12 @@ public class DatabaseManager {
         }
     }
 
+    public void shutdown() {
+        if (emf != null && emf.isOpen()) {
+            emf.close();
+            System.out.println("EntityManagerFactory closed.");
+        }
+    }
+
+
 }
