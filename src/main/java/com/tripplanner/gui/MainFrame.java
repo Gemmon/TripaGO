@@ -6,6 +6,7 @@ import com.tripplanner.events.*;
 import com.tripplanner.model.Place;
 import com.tripplanner.model.Weather;
 import com.tripplanner.services.GooglePlacesService;
+import com.tripplanner.services.PlaceService;
 import com.tripplanner.services.WeatherService;
 import com.tripplanner.database.DatabaseManager;
 import javax.swing.*;
@@ -15,6 +16,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class MainFrame extends JFrame {
     private JTextField locationField;
@@ -49,6 +51,7 @@ public class MainFrame extends JFrame {
     private void initializeServices() {
         placesService = new GooglePlacesService();
         weatherService = new WeatherService();
+        PlaceService.getInstance();
     }
 
     private void initializeComponents() {
@@ -73,7 +76,7 @@ public class MainFrame extends JFrame {
     private void setupLayout() {
         setLayout(new BorderLayout());
 
-        // panel wyszukiwania
+        // Panel wyszukiwania
         JPanel searchPanel = new JPanel(new FlowLayout());
         searchPanel.setBorder(BorderFactory.createTitledBorder("Wyszukiwanie"));
 
@@ -96,16 +99,16 @@ public class MainFrame extends JFrame {
 
         add(searchPanel, BorderLayout.NORTH);
 
-        // panel główny
+        // Panel główny
         JPanel mainPanel = new JPanel(new BorderLayout());
 
-        // panel miejsc
+        // Panel miejsc
         JScrollPane placesScrollPane = new JScrollPane(placesPanel);
         placesScrollPane.setPreferredSize(new Dimension(600, 400));
         placesScrollPane.getVerticalScrollBar().setUnitIncrement(23);
         mainPanel.add(placesScrollPane, BorderLayout.CENTER);
 
-        // panel pogody
+        // Panel pogody
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.add(weatherWidget, BorderLayout.NORTH);
 
@@ -113,7 +116,7 @@ public class MainFrame extends JFrame {
 
         add(mainPanel, BorderLayout.CENTER);
 
-        // panel statusu
+        // Panel statusu
         JPanel statusPanel = new JPanel(new BorderLayout());
         statusPanel.add(statusLabel, BorderLayout.WEST);
         statusPanel.add(progressBar, BorderLayout.CENTER);
@@ -133,7 +136,7 @@ public class MainFrame extends JFrame {
         String location = locationField.getText().trim();
         String type = (String) typeComboBox.getSelectedItem();
 
-        System.out.println("ROZPOCZĘCIE WYSZUKIWANIA");
+        System.out.println("=== ROZPOCZĘCIE WYSZUKIWANIA ===");
         System.out.println("Lokalizacja: " + location);
         System.out.println("Typ: " + type);
 
@@ -145,16 +148,16 @@ public class MainFrame extends JFrame {
         statusLabel.setText("Wyszukiwanie...");
         progressBar.setVisible(true);
 
-        // czyszczenie poprzednich wyników
+        // Wyczyść poprzednie wyniki
         placesPanel.removeAll();
         placesPanel.revalidate();
         placesPanel.repaint();
 
-        // wyszukiwanie miejsc
+        // Asynchroniczne wyszukiwanie miejsc
         CompletableFuture<List<Place>> placesTask = placesService.searchPlaces(location, type);
         CompletableFuture<Weather> weatherTask = weatherService.getWeather(location);
 
-        // czekanie na zakończenie wyszukiwania
+        // Kombinowanie zadań
         CompletableFuture.allOf(placesTask, weatherTask).thenRunAsync(() -> {
             SwingUtilities.invokeLater(() -> {
                 try {
@@ -225,18 +228,20 @@ public class MainFrame extends JFrame {
         });
     }
 
+    // Aktualizacja metody saveSelectedPlaces
     private void saveSelectedPlaces(ActionEvent e) {
         Component[] components = placesPanel.getComponents();
         int savedCount = 0;
         List<String> alreadyExists = new ArrayList<>();
 
+        // Collect and save selected places
         for (Component comp : components) {
             if (comp instanceof PlaceCard && ((PlaceCard) comp).isSelected()) {
                 PlaceCard card = (PlaceCard) comp;
                 Place place = card.getPlace();
 
                 try {
-                    // sprawdzenie czy istniało
+                    // Check if place already exists before saving
                     List<Place> existingPlaces = DatabaseManager.getInstance().getAllPlaces();
                     boolean exists = existingPlaces.stream()
                             .anyMatch(p -> p.getName().equals(place.getName()) &&
@@ -260,7 +265,7 @@ public class MainFrame extends JFrame {
             }
         }
 
-        // rezultat
+        // Show result message
         StringBuilder message = new StringBuilder();
         if (savedCount > 0) {
             message.append("Zapisano ").append(savedCount).append(" nowych miejsc");
