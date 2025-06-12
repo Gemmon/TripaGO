@@ -10,7 +10,7 @@ import java.util.concurrent.Executors;
 public class EventBus {
     private static EventBus instance;
     private final List<Object> subscribers = new CopyOnWriteArrayList<>();
-    private final ExecutorService eventExecutor = Executors.newFixedThreadPool(4);
+    private final ExecutorService eventExecutor = Executors.newFixedThreadPool(7);
 
     private EventBus() {}
 

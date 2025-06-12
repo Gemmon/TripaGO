@@ -1,0 +1,11 @@
+google.api.key=
+weather.api.key=
+
+Database Configuration
+database.url=jdbc:h2:./data/tripplanner
+database.user=sa
+database.password=
+
+app.name=Trip Planner
+app.version=1.0.0
+app.debug=true

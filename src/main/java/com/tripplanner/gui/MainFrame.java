@@ -44,7 +44,7 @@ public class MainFrame extends JFrame {
 
     private void showStartupMessage() {
         SwingUtilities.invokeLater(() -> {
-            statusLabel.setText("Aplikacja gotowa. Wprowadź lokalizację i kliknij 'Szukaj'");
+            statusLabel.setText("Wprowadź lokalizację i kliknij 'Szukaj'");
         });
     }
 
@@ -136,7 +136,7 @@ public class MainFrame extends JFrame {
         String location = locationField.getText().trim();
         String type = (String) typeComboBox.getSelectedItem();
 
-        System.out.println("=== ROZPOCZĘCIE WYSZUKIWANIA ===");
+        System.out.println("ROZPOCZĘCIE WYSZUKIWANIA");
         System.out.println("Lokalizacja: " + location);
         System.out.println("Typ: " + type);
 
@@ -148,16 +148,16 @@ public class MainFrame extends JFrame {
         statusLabel.setText("Wyszukiwanie...");
         progressBar.setVisible(true);
 
-        // Wyczyść poprzednie wyniki
+        // czyszczenei poprzednich wyników
         placesPanel.removeAll();
         placesPanel.revalidate();
         placesPanel.repaint();
 
-        // Asynchroniczne wyszukiwanie miejsc
+        // wyszukiwanie miejsc
         CompletableFuture<List<Place>> placesTask = placesService.searchPlaces(location, type);
         CompletableFuture<Weather> weatherTask = weatherService.getWeather(location);
 
-        // Kombinowanie zadań
+        // czekanie na koniec zapytań
         CompletableFuture.allOf(placesTask, weatherTask).thenRunAsync(() -> {
             SwingUtilities.invokeLater(() -> {
                 try {
@@ -228,20 +228,18 @@ public class MainFrame extends JFrame {
         });
     }
 
-    // Aktualizacja metody saveSelectedPlaces
     private void saveSelectedPlaces(ActionEvent e) {
         Component[] components = placesPanel.getComponents();
         int savedCount = 0;
         List<String> alreadyExists = new ArrayList<>();
 
-        // Collect and save selected places
         for (Component comp : components) {
             if (comp instanceof PlaceCard && ((PlaceCard) comp).isSelected()) {
                 PlaceCard card = (PlaceCard) comp;
                 Place place = card.getPlace();
 
                 try {
-                    // Check if place already exists before saving
+                    // sprawdzanie czy było takie miejsce
                     List<Place> existingPlaces = DatabaseManager.getInstance().getAllPlaces();
                     boolean exists = existingPlaces.stream()
                             .anyMatch(p -> p.getName().equals(place.getName()) &&
@@ -265,7 +263,7 @@ public class MainFrame extends JFrame {
             }
         }
 
-        // Show result message
+        // rezultat
         StringBuilder message = new StringBuilder();
         if (savedCount > 0) {
             message.append("Zapisano ").append(savedCount).append(" nowych miejsc");

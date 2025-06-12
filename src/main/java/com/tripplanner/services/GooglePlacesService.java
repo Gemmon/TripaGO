@@ -21,10 +21,6 @@ public class GooglePlacesService {
             try {
                 String apiKey = ConfigManager.getInstance().getGoogleApiKey();
 
-                // Debug: sprawdź czy klucz API jest prawidłowy
-                System.out.println("Google API Key: " + (apiKey != null && !apiKey.equals("YOUR_GOOGLE_API_KEY") ?
-                        apiKey.substring(0, Math.min(8, apiKey.length())) + "..." : "NOT_SET"));
-
                 String query = URLEncoder.encode(type + " in " + location, StandardCharsets.UTF_8);
                 String urlStr = PLACES_API_URL + "?query=" + query + "&key=" + apiKey;
 
@@ -63,7 +59,7 @@ public class GooglePlacesService {
         try {
             JSONObject json = new JSONObject(jsonResponse);
 
-            // Sprawdź status odpowiedzi
+            // status odpowiedzi
             String status = json.optString("status", "UNKNOWN");
             System.out.println("Google Places API Status: " + status);
 
